@@ -1,3 +1,17 @@
+def extract_matchines_lines(source_path: str, target_path: str, keyword: str) -> int:
+    keyword_count = 0
+    with open(source_path, "r") as src, \
+        open(target_path, "w") as dst:
+        for line in src:
+            if keyword in line:
+                dst.write(line)
+                keyword_count += 1
+    return keyword_count
+
+extract_matchines_lines()
+
+
+
 with open("app.log", "r") as src, \
     open("errors.log", "w+") as dst:
 
@@ -7,23 +21,3 @@ with open("app.log", "r") as src, \
     dst.seek(0)
     for line in dst:
         print(line, end="")
-
-
-# with open("app.log", "r") as file:
-#     with open("errors.log", "w+") as errors:
-#         contents = file.readlines()
-#         error_count = 0
-#         line_count = 0
-
-#         for line in contents:
-#             line_count += 1
-#             print(f"Line {line_count}")
-#             print(line)
-#             if "ERROR" in line:
-#                 error_count += 1
-#                 errors.write(line.strip() + "\n")
-
-#         print(f"Error count: {error_count}")
-#         errors.seek(0)
-#         for line in errors.readlines():
-#             print(line)
