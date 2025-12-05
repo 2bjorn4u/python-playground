@@ -1,12 +1,12 @@
-import argparse
+import argparse,sys
 
-def extract_matchines_lines(source_path: str, target_path: str, keyword: str) -> int:
+def extract_matching_lines(source_path: str, target_path: str, keyword: str) -> int:
     """
     Reads lines from source_path, writes those containing keyword to target_path,
     and returns the number of matches.
     """
     keyword_count = 0
-    with open(source_path, "r") as src, open(target_path, "w") as dst:
+    with open(source_path, "r",encoding="utf-8") as src, open(target_path, "w", encoding="utf-8") as dst:
         for line in src:
             if keyword in line:
                 dst.write(line)
@@ -52,7 +52,11 @@ def main():
 
     # 4. Call the function
 
-    count = extract_matchines_lines(args.source, args.target, args.keyword)
+    try:
+        count = extract_matching_lines(args.source, args.target, args.keyword)
+    except FileNotFoundError:
+        print(f"Unable to find the source-file ('{args.source}').", file=sys.stderr)
+        sys.exit(1)
 
     # 5. Print summary
 
