@@ -3,7 +3,7 @@ import argparse,sys,csv
 from datetime import datetime,timedelta
 
 #   DEFINING CORE FUNCTIONALITY
-def ticket_report(csv_path: str):
+def ticket_report(csv_path: str, agent_filter: str | None=None):
 
     #   OPENING CSV FILE USING CSV DICTREADER
     with open(csv_path, "r", newline='') as src:
@@ -21,6 +21,12 @@ def ticket_report(csv_path: str):
         #   PROCESSING OF DICTIONARY DATA
         for line in data:
 
+            agent = line["agent"]
+
+            # Skip if filter is set but doesn’t match
+            if agent_filter is not None and agent != agent_filter:
+                continue
+
             #   COUNTING TOTAL NUMBER OF TICKETS
             line_counter += 1
 
@@ -28,7 +34,6 @@ def ticket_report(csv_path: str):
             ticket_id = line["ticket_id"]
             status = line["status"]
             priority = line["priority"]
-            agent = line["agent"]
             created_at = line["created_at"]
             closed_at = line["closed_at"]
             
@@ -77,6 +82,7 @@ def ticket_report(csv_path: str):
                     Pending: {(tickets_per_status['pending'])}
                     Closed: {(tickets_per_status['closed'])} 
               ''')
+        
     for agent in agents:
         print(f"{agent}'s tickets: {tickets_per_agent[agent]}")
     print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
@@ -92,7 +98,8 @@ def main():
     parser.add_argument(
         "source",
         nargs="?",
-        default="ChatGPT/CSV_ticket_report/tickets.csv",
+        # default="ChatGPT/CSV_ticket_report/tickets.csv",
+        default="tickets.csv",
         help="Source log file (default: tickets.csv)"
     )
 
@@ -109,7 +116,7 @@ def main():
 
     #   CALL FUNCTION
     try:
-        report = ticket_report(args.source)
+        report = ticket_report(args.source,args.agent)
     except FileNotFoundError:
         print(f"Unable to find the source-file ('{args.source}').", file=sys.stderr)
         sys.exit(1)
