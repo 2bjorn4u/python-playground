@@ -17,11 +17,12 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
         tickets_per_priority = {}
         closed_tickets = []
         total_work_time = timedelta()
+        incorrect_agent_name = False
 
         #   PROCESSING OF DICTIONARY DATA
         for line in data:
 
-            agent = line["agent"]
+            agent = line.get("agent", "Unknown")
 
             # Skip if filter is set but doesn’t match
             if agent_filter is not None and agent != agent_filter:
@@ -31,9 +32,9 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             line_counter += 1
 
             #   DECLARING VARIABLES FROM DICTIONARIES
-            ticket_id = line["ticket_id"]
-            status = line["status"]
-            priority = line["priority"]
+            ticket_id = line.get("ticket_id", "Unknown Ticket ID")
+            status = line.get("status", "Unknown Status")
+            priority = line.get("priority", "Unknown Priority")
             created_at = line["created_at"]
             closed_at = line["closed_at"]
             
@@ -70,22 +71,32 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                     }
                 )
                 total_work_time += worked_time
-        Average_Resolution_Time = str(total_work_time / len(closed_tickets))
+        if agent_filter not in agents:
+            incorrect_agent_name = True
+        if closed_tickets:
+            Average_Resolution_Time = str(total_work_time / len(closed_tickets))
+        else:
+            Average_Resolution_Time = "N/A"
 
 
-        print(f'''\nTicket Report for "{csv_path}":
-              
-                Total tickets: {line_counter}
-
-                Tickets by status:
-                    Open: {tickets_per_status['open']}
-                    Pending: {(tickets_per_status['pending'])}
-                    Closed: {(tickets_per_status['closed'])} 
-              ''')
+        if agent_filter is None:
         
-    for agent in agents:
-        print(f"{agent}'s tickets: {tickets_per_agent[agent]}")
-    print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
+            print(f'\nTicket Report for "{csv_path}:')
+            print(f'\nTotal tickets: {line_counter}')
+            print(f'\nTickets by Status:\n')
+            for status, count in tickets_per_status.items():
+                print(f'\t{status.capitalize()}: {count}')
+            print('\nTickets per Agent:\n')
+            for agent, count in tickets_per_agent.items():
+                print(f'\t{agent}: {count}')
+            print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
+
+        else:
+            if not incorrect_agent_name:
+                print(f"{agent_filter}'s tickets: {tickets_per_agent[agent_filter]}")
+            else:
+                print(f'There is either no Agent {agent_filter}, '
+                      'or no tickets were assigned to that agent.')
 
 def main():
 
