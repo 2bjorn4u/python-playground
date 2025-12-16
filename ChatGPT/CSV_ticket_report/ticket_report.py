@@ -11,7 +11,6 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
 
         #   TICKET TOTAL COUNT AND SPLIT INTO DICTIONARIES
         line_counter = 0
-        agents = []
         tickets_per_agent = {}
         tickets_per_status = {}
         tickets_per_priority = {}
@@ -42,8 +41,6 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             if agent not in tickets_per_agent:
                 tickets_per_agent[agent] = 0
             tickets_per_agent[agent] += 1
-            if agent not in agents:
-                agents.append(agent)
 
             #   PARSING FOR STATUS AND ADDING TICKET TO DICTIONARY
             if status not in tickets_per_status:
@@ -71,8 +68,7 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                     }
                 )
                 total_work_time += worked_time
-        if agent_filter not in agents:
-            incorrect_agent_name = True
+
         if closed_tickets:
             Average_Resolution_Time = str(total_work_time / len(closed_tickets))
         else:
@@ -80,23 +76,34 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
 
 
         if agent_filter is None:
+
+            return{
+                "total_tickets": line_counter,
+                "tickets_per_agent": tickets_per_agent,
+                "tickets_per_status": tickets_per_status,
+                "tickets_per_priority": tickets_per_priority,
+                "average_resolution_time": Average_Resolution_Time
+            }
         
-            print(f'\nTicket Report for "{csv_path}:')
-            print(f'\nTotal tickets: {line_counter}')
-            print(f'\nTickets by Status:\n')
-            for status, count in tickets_per_status.items():
-                print(f'\t{status.capitalize()}: {count}')
-            print('\nTickets per Agent:\n')
-            for agent, count in tickets_per_agent.items():
-                print(f'\t{agent}: {count}')
-            print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
+        #     print(f'''\nTicket Report for {csv_path}:
+        #         \nTotal tickets: \t\t{line_counter}
+        #         \nTickets by Status:\n''')
+            
+        #     for status, count in tickets_per_status.items():
+        #         print(f'\t{status.capitalize()}: {count}')
+
+        #     print('\nTickets per Agent:\n')
+        #     for agent, count in tickets_per_agent.items():
+        #         print(f'\t{agent}: {count}')
+
+        #     print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
 
         else:
-            if not incorrect_agent_name:
-                print(f"{agent_filter}'s tickets: {tickets_per_agent[agent_filter]}")
+            if agent_filter in tickets_per_agent:
+                return {agent_filter: tickets_per_agent[agent_filter]}
             else:
-                print(f'There is either no Agent {agent_filter}, '
-                      'or no tickets were assigned to that agent.')
+                return {"error": f'There is either no Agent {agent_filter}, '
+                      'or no tickets were assigned to that agent.'}
 
 def main():
 
@@ -128,6 +135,28 @@ def main():
     #   CALL FUNCTION
     try:
         report = ticket_report(args.source,args.agent)
+        # Unknown Agent filter
+        if "error" in report:
+            print(report["error"])
+        # Known Agent filter
+        elif args.agent:
+            for agent, count in report.items():
+                print(f"{agent.capitalize()}'s Ticket count is: {count}")
+        # General Report
+        else:
+            print(f'''\nTicket Report for {args.source}:
+                \nTotal tickets: \t\t{report["total_tickets"]}
+                \nTickets by Status:\n''')
+            
+            for status, count in report["tickets_per_status"].items():
+                print(f'\t{status.capitalize()}: {count}')
+
+            print('\nTickets per Agent:\n')
+            for agent, count in report["tickets_per_agent"].items():
+                print(f'\t{agent}: {count}')
+
+            print(f'\nAverage Resolution Time: {report["average_resolution_time"]}\n')
+
     except FileNotFoundError:
         print(f"Unable to find the source-file ('{args.source}').", file=sys.stderr)
         sys.exit(1)
