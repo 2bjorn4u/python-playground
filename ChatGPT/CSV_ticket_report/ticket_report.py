@@ -1,6 +1,15 @@
 #   IMPORTING REQUIRED MODULES
 import argparse,sys,csv
 from datetime import datetime,timedelta
+from collections import Counter
+
+def format_timedelta(td: timedelta) -> str:
+    total_seconds = int(td.total_seconds())
+    days, remaining_seconds_d = divmod(total_seconds, 86400)
+    hours, remainding_seconds_h = divmod(remaining_seconds_d, 3600)
+    minutes, seconds = divmod(remainding_seconds_h, 60)
+    return f"{days}d {hours}h {minutes}m {seconds}s"
+
 
 #   DEFINING CORE FUNCTIONALITY
 def ticket_report(csv_path: str, agent_filter: str | None=None):
@@ -11,12 +20,11 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
 
         #   TICKET TOTAL COUNT AND SPLIT INTO DICTIONARIES
         line_counter = 0
-        tickets_per_agent = {}
-        tickets_per_status = {}
-        tickets_per_priority = {}
+        tickets_per_agent = Counter()
+        tickets_per_status = Counter()
+        tickets_per_priority = Counter()
         closed_tickets = []
         total_work_time = timedelta()
-        incorrect_agent_name = False
 
         #   PROCESSING OF DICTIONARY DATA
         for line in data:
@@ -38,39 +46,42 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             closed_at = line["closed_at"]
             
             #   PARSING FOR AGENTS
-            if agent not in tickets_per_agent:
-                tickets_per_agent[agent] = 0
             tickets_per_agent[agent] += 1
 
             #   PARSING FOR STATUS AND ADDING TICKET TO DICTIONARY
-            if status not in tickets_per_status:
-                tickets_per_status[status] = 0
             tickets_per_status[status] += 1
 
             # PARSING FOR PRIORITY
-            if priority not in tickets_per_priority:
-                tickets_per_priority[priority] = 0
             tickets_per_priority[priority] += 1
 
             #   COLLECTING INFO ON CLOSED TICKETS
+            DATE_TIME = '%Y-%m-%d %H:%M:%S'
             if status == "closed":
                 #   CREATING DATETIME OBJECTS
-                dt_created_at = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
-                dt_closed_at = datetime.strptime(closed_at, '%Y-%m-%d %H:%M:%S')
-                worked_time = dt_closed_at - dt_created_at
-                worked_time_stringified = str(worked_time)
-                closed_tickets.append(
-                    {
-                        "Ticket ID": ticket_id, 
-                        "Created at:": dt_created_at,
-                        "Closed at:": dt_closed_at,
-                        "Worked time:": worked_time_stringified
-                    }
-                )
-                total_work_time += worked_time
+                try:
+                    dt_created_at = datetime.strptime(created_at, DATE_TIME)
+                    dt_closed_at = datetime.strptime(closed_at, DATE_TIME)
+                    worked_time = dt_closed_at - dt_created_at
+                    worked_time_stringified = str(worked_time)
+                    closed_tickets.append(
+                        {
+                            "Ticket ID": ticket_id, 
+                            "Created at:": dt_created_at,
+                            "Closed at:": dt_closed_at,
+                            "Worked time:": worked_time_stringified
+                        }
+                    )
+                    total_work_time += worked_time
+                except (ValueError, TypeError) as e:
+                    # Gracefully skip bad CSV row
+
+                     print(f"\n⚠️ Skipping ticket {ticket_id}: invalid date format ({e})")
+                     continue
+
 
         if closed_tickets:
-            Average_Resolution_Time = str(total_work_time / len(closed_tickets))
+            avg_time = total_work_time / len(closed_tickets)
+            Average_Resolution_Time = format_timedelta(avg_time)
         else:
             Average_Resolution_Time = "N/A"
 
