@@ -11,7 +11,7 @@ def format_timedelta(td: timedelta) -> str:
     return f"{days}d {hours}h {minutes}m {seconds}s"
 
 
-# Definining core functiona
+# Defining core function
 def ticket_report(csv_path: str, agent_filter: str | None=None):
 
     # Opening CSV file using DictReader
@@ -43,8 +43,8 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             ticket_id = line.get("ticket_id", "Unknown Ticket ID")
             status = line.get("status", "Unknown Status")
             priority = line.get("priority", "Unknown Priority")
-            created_at = line.get("created_at", "Unknown")
-            closed_at = line.get("closed_at", "Unknown")
+            created_at = line.get("created_at")
+            closed_at = line.get("closed_at")
             
             # Parsing for Agents, Status, Priority
             tickets_per_agent[agent] += 1
@@ -62,9 +62,9 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                     closed_tickets.append(
                         {
                             "Ticket ID": ticket_id, 
-                            "Created at:": created_at,
-                            "Closed at:": closed_at,
-                            "Worked time:": format_timedelta(worked_time)
+                            "Created at": created_at,
+                            "Closed at": closed_at,
+                            "Worked time": format_timedelta(worked_time)
                         }
                     )
                     total_work_time += worked_time
@@ -77,9 +77,9 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
         # Calculating MTTR
         if closed_tickets:
             avg_time = total_work_time / len(closed_tickets)
-            Average_Resolution_Time = format_timedelta(avg_time)
+            average_resolution_time = format_timedelta(avg_time)
         else:
-            Average_Resolution_Time = "N/A"
+            average_resolution_time = "N/A"
 
         # Returning General Report
         if agent_filter is None:
@@ -89,13 +89,17 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                 "tickets_per_agent": tickets_per_agent,
                 "tickets_per_status": tickets_per_status,
                 "tickets_per_priority": tickets_per_priority,
-                "average_resolution_time": Average_Resolution_Time
+                "average_resolution_time": average_resolution_time
             }
         
         # Returning Agent-specific Report
         else:
             if agent_filter in tickets_per_agent:
-                return {agent_filter: tickets_per_agent[agent_filter]}
+                return {
+                    "agent": agent_filter,
+                    "ticket count": tickets_per_agent[agent_filter],
+                    "average resolution time": average_resolution_time
+                    }
             else:
                 return {"error": f'There is either no Agent {agent_filter}, '
                       'or no tickets were assigned to that agent.'}
@@ -136,8 +140,9 @@ def main():
 
         # Known Agent filter
         elif args.agent:
-            for agent, count in report.items():
-                print(f"{agent.capitalize()}'s Ticket count is: {count}")
+            print(f"Agent: {report['agent']}")
+            print(f"Number of assigned tickets: {report['ticket count']}")
+            print(f"Mean Time to Resolution: {report['average resolution time']}")
 
         # General Report
         else:
