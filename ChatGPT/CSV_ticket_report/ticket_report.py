@@ -27,12 +27,13 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
         total_work_time = timedelta()
 
         #   PROCESSING OF DICTIONARY DATA
+        DATE_TIME = '%Y-%m-%d %H:%M:%S'
         for line in data:
 
             agent = line.get("agent", "Unknown")
 
             # Skip if filter is set but doesn’t match
-            if agent_filter is not None and agent != agent_filter:
+            if agent_filter and agent != agent_filter:
                 continue
 
             #   COUNTING TOTAL NUMBER OF TICKETS
@@ -42,8 +43,8 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             ticket_id = line.get("ticket_id", "Unknown Ticket ID")
             status = line.get("status", "Unknown Status")
             priority = line.get("priority", "Unknown Priority")
-            created_at = line["created_at"]
-            closed_at = line["closed_at"]
+            created_at = line.get("created_at", "Unknown")
+            closed_at = line.get("closed_at", "Unknown")
             
             #   PARSING FOR AGENTS
             tickets_per_agent[agent] += 1
@@ -55,20 +56,19 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             tickets_per_priority[priority] += 1
 
             #   COLLECTING INFO ON CLOSED TICKETS
-            DATE_TIME = '%Y-%m-%d %H:%M:%S'
+            
             if status == "closed":
                 #   CREATING DATETIME OBJECTS
                 try:
                     dt_created_at = datetime.strptime(created_at, DATE_TIME)
                     dt_closed_at = datetime.strptime(closed_at, DATE_TIME)
                     worked_time = dt_closed_at - dt_created_at
-                    worked_time_stringified = str(worked_time)
                     closed_tickets.append(
                         {
                             "Ticket ID": ticket_id, 
-                            "Created at:": dt_created_at,
-                            "Closed at:": dt_closed_at,
-                            "Worked time:": worked_time_stringified
+                            "Created at:": created_at,
+                            "Closed at:": closed_at,
+                            "Worked time:": format_timedelta(worked_time)
                         }
                     )
                     total_work_time += worked_time
@@ -96,18 +96,6 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                 "average_resolution_time": Average_Resolution_Time
             }
         
-        #     print(f'''\nTicket Report for {csv_path}:
-        #         \nTotal tickets: \t\t{line_counter}
-        #         \nTickets by Status:\n''')
-            
-        #     for status, count in tickets_per_status.items():
-        #         print(f'\t{status.capitalize()}: {count}')
-
-        #     print('\nTickets per Agent:\n')
-        #     for agent, count in tickets_per_agent.items():
-        #         print(f'\t{agent}: {count}')
-
-        #     print(f"\nAverage Resolution Time: {Average_Resolution_Time}\n")
 
         else:
             if agent_filter in tickets_per_agent:
