@@ -1,4 +1,4 @@
-#   IMPORTING REQUIRED MODULES
+# Importing required Modules
 import argparse,sys,csv
 from datetime import datetime,timedelta
 from collections import Counter
@@ -11,14 +11,14 @@ def format_timedelta(td: timedelta) -> str:
     return f"{days}d {hours}h {minutes}m {seconds}s"
 
 
-#   DEFINING CORE FUNCTIONALITY
+# Definining core functiona
 def ticket_report(csv_path: str, agent_filter: str | None=None):
 
-    #   OPENING CSV FILE USING CSV DICTREADER
+    # Opening CSV file using DictReader
     with open(csv_path, "r", newline='') as src:
         data = csv.DictReader(src)     
 
-        #   TICKET TOTAL COUNT AND SPLIT INTO DICTIONARIES
+        # Declaring essential variables
         line_counter = 0
         tickets_per_agent = Counter()
         tickets_per_status = Counter()
@@ -26,7 +26,7 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
         closed_tickets = []
         total_work_time = timedelta()
 
-        #   PROCESSING OF DICTIONARY DATA
+        # Processing Dictionary Data
         DATE_TIME = '%Y-%m-%d %H:%M:%S'
         for line in data:
 
@@ -36,29 +36,25 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
             if agent_filter and agent != agent_filter:
                 continue
 
-            #   COUNTING TOTAL NUMBER OF TICKETS
+            # Counting total number of tickets
             line_counter += 1
 
-            #   DECLARING VARIABLES FROM DICTIONARIES
+            # Getting dictionary values from DictReader CSV
             ticket_id = line.get("ticket_id", "Unknown Ticket ID")
             status = line.get("status", "Unknown Status")
             priority = line.get("priority", "Unknown Priority")
             created_at = line.get("created_at", "Unknown")
             closed_at = line.get("closed_at", "Unknown")
             
-            #   PARSING FOR AGENTS
+            # Parsing for Agents, Status, Priority
             tickets_per_agent[agent] += 1
-
-            #   PARSING FOR STATUS AND ADDING TICKET TO DICTIONARY
             tickets_per_status[status] += 1
-
-            # PARSING FOR PRIORITY
             tickets_per_priority[priority] += 1
 
-            #   COLLECTING INFO ON CLOSED TICKETS
+            # Gathering Closed Tickets Metrics
             
             if status == "closed":
-                #   CREATING DATETIME OBJECTS
+                # Converting Date/Time data to Datetime objects
                 try:
                     dt_created_at = datetime.strptime(created_at, DATE_TIME)
                     dt_closed_at = datetime.strptime(closed_at, DATE_TIME)
@@ -73,19 +69,19 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                     )
                     total_work_time += worked_time
                 except (ValueError, TypeError) as e:
-                    # Gracefully skip bad CSV row
+                    # Gracefully skipping bad CSV row
 
                      print(f"\n⚠️ Skipping ticket {ticket_id}: invalid date format ({e})")
                      continue
 
-
+        # Calculating MTTR
         if closed_tickets:
             avg_time = total_work_time / len(closed_tickets)
             Average_Resolution_Time = format_timedelta(avg_time)
         else:
             Average_Resolution_Time = "N/A"
 
-
+        # Returning General Report
         if agent_filter is None:
 
             return{
@@ -96,7 +92,7 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                 "average_resolution_time": Average_Resolution_Time
             }
         
-
+        # Returning Agent-specific Report
         else:
             if agent_filter in tickets_per_agent:
                 return {agent_filter: tickets_per_agent[agent_filter]}
@@ -104,23 +100,23 @@ def ticket_report(csv_path: str, agent_filter: str | None=None):
                 return {"error": f'There is either no Agent {agent_filter}, '
                       'or no tickets were assigned to that agent.'}
 
+
 def main():
 
-    #   CREATE THE PARSER
+    # Creating the Parser
     parser = argparse.ArgumentParser(
         description="Allows the user to choose a source file"
     )
 
-    #   ADD ARGUMENT
+    # Adding required Arguments
     parser.add_argument(
         "source",
         nargs="?",
-        # default="ChatGPT/CSV_ticket_report/tickets.csv",
         default="tickets.csv",
         help="Source log file (default: tickets.csv)"
     )
 
-    #   ADD OPTIONAL ARGUMENT
+    # Adding optional Arguments
     parser.add_argument(
         "-a", "--agent",
         nargs="?",
@@ -128,19 +124,21 @@ def main():
         help="Allows you to filter by Agent name"
         )
     
-    #   PARSE ARGUMENTS
+    # Parsing Arguments
     args = parser.parse_args()
 
-    #   CALL FUNCTION
+    # Calling the function
     try:
         report = ticket_report(args.source,args.agent)
         # Unknown Agent filter
         if "error" in report:
             print(report["error"])
+
         # Known Agent filter
         elif args.agent:
             for agent, count in report.items():
                 print(f"{agent.capitalize()}'s Ticket count is: {count}")
+
         # General Report
         else:
             print(f'''\nTicket Report for {args.source}:
@@ -159,10 +157,6 @@ def main():
     except FileNotFoundError:
         print(f"Unable to find the source-file ('{args.source}').", file=sys.stderr)
         sys.exit(1)
-            
-            
-
-# ticket_report("ChatGPT/CSV_ticket_report/tickets.csv")
 
 if __name__ == "__main__":
     main()
