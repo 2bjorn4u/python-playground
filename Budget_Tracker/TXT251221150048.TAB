@@ -1,3 +1,4 @@
+Account	Currency	Transaction_Date	Amount_Before	Amount_After	Value_Date	Amount	Description
 533436303	EUR	20250101	406,84	403,39	20250101	-3,45	BEA, Google Pay                  NLOVDRJZLWBLRZRJEY,PAS311       NR:PT30AD4B, 31.12.24/18:12      www.ovpay.nl                    
 533436303	EUR	20250101	403,39	370,89	20250101	-32,50	BEA, Google Pay                  Tony's New York City B,PAS311   NR:111051EQ, 01.01.25/10:41      AMSTERDAM                       
 533436303	EUR	20250101	370,89	375,39	20250101	4,50	SEPA Overboeking                 IBAN: NL13ABNA0506417344        BIC: ABNANL2A                    Naam: AAB INZ TIKKIE            Omschrijving: Tikkie ID 00095143 4617, Sam s Hairfryer, Van Mw E Patriubaviciute, NL57INGB0390732 745                             Kenmerk: 951434617                                               
